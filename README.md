@@ -13,6 +13,68 @@
 
 ---
 
+## Hackathon Requirements & NVIDIA / Nebius Usage
+
+This repository is prepared for public judging and testing.
+
+### Open-Source License
+
+NEXUS is released under the **Apache License 2.0**, an OSI-approved open-source license. See [LICENSE](LICENSE).
+
+### NVIDIA Nemotron
+
+NEXUS uses **NVIDIA Nemotron 3 Super 120B A12B** as the reasoning model for four distinct roles:
+
+1. **Incident Analyst** — converts structured incident + shipment-impact data into an operational brief.
+2. **Recovery Planner** — generates bounded recovery strategies without inventing deterministic logistics metrics.
+3. **Critic Agent** — challenges the simulation leader against externally retrieved evidence.
+4. **Decision Agent** — synthesizes simulation, evidence, and critic findings before the deterministic policy gate is applied.
+
+Current model:
+
+```text
+nvidia/nemotron-3-super-120b-a12b
+```
+
+Nemotron is intentionally **not** the source of truth for exposure counts, route geometry, cost, delay, residual risk, SLA exposure, or policy enforcement. Those are calculated in deterministic Python components.
+
+### Nebius Token Factory
+
+NEXUS accesses NVIDIA Nemotron through **Nebius Token Factory** using its OpenAI-compatible inference endpoint.
+
+Token Factory accelerated the project by allowing the same application code to call a large open model through a hosted API rather than requiring us to provision and operate GPU infrastructure ourselves.
+
+This made it practical to:
+
+- prototype multiple agent roles quickly,
+- use the same Nemotron model across Analyze, Plan, Challenge, and Decide,
+- collect model latency and token telemetry,
+- iterate rapidly during hackathon development,
+- deploy the Streamlit application without packaging the model weights into the app.
+
+The configured endpoint is:
+
+```text
+https://api.tokenfactory.us-central1.nebius.com/v1/
+```
+
+### Other Nebius Services
+
+For this hackathon build, **Nebius Token Factory is the Nebius service used for model inference**. NEXUS does not currently depend on additional Nebius infrastructure services such as managed compute, storage, or Kubernetes.
+
+### Other Core Technologies
+
+- **Tavily** — live public evidence retrieval used by the Critic Agent
+- **Python** — deterministic impact, simulation, scoring, and policy logic
+- **FastAPI** — local/API-backed runtime during development
+- **Streamlit** — command-center UI and Community Cloud deployment
+- **Plotly / Pandas / Pydantic** — visualization, data handling, and structured validation
+
+### Setup and Testing
+
+Full setup instructions are provided in the **Run Locally**, **Optional FastAPI Mode**, **Validation Scripts**, and **Streamlit Deployment** sections below.
+
+
 ## Why NEXUS
 
 When a major logistics disruption occurs, the hardest problem is not simply detecting it. Operations teams must quickly answer:

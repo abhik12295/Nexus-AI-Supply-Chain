@@ -1085,25 +1085,24 @@ def render_stage8_command_center(
             """,
             unsafe_allow_html=True,
         )
+        # Render the readiness list as one compact HTML block. Multiline
+        # nested fragments can be interpreted as Markdown text by Streamlit,
+        # which exposes raw <div> tags in the deployed app.
         check_html = []
         for check in readiness.get("checks", []):
             state = str(check.get("status", "CHECK"))
             css = "ready" if state == "READY" else "check"
+            label = html.escape(str(check.get("label", "")))
+            detail = html.escape(str(check.get("detail", "")))
+            safe_state = html.escape(state)
             check_html.append(
-                f"""
-                <div class="readiness-row readiness-{css}">
-                  <div>
-                    <strong>{html.escape(str(check.get("label", "")))}</strong>
-                    <span>{html.escape(str(check.get("detail", "")))}</span>
-                  </div>
-                  <em>{html.escape(state)}</em>
-                </div>
-                """
+                f'<div class="readiness-row readiness-{css}">'
+                f'<div><strong>{label}</strong><span>{detail}</span></div>'
+                f'<em>{safe_state}</em>'
+                f'</div>'
             )
-        st.markdown(
-            '<div class="readiness-list">' + "".join(check_html) + "</div>",
-            unsafe_allow_html=True,
-        )
+        readiness_html = '<div class="readiness-list">' + ''.join(check_html) + '</div>'
+        st.markdown(readiness_html, unsafe_allow_html=True)
 
     with right:
         st.markdown(

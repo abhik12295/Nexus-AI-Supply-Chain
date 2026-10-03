@@ -10,23 +10,6 @@ from dotenv import load_dotenv
 ROOT = Path(__file__).resolve().parent
 load_dotenv(ROOT / ".env")
 
-# Root-level Streamlit Community Cloud secrets are copied into the
-# environment so the existing service classes work locally and in Cloud.
-for _secret_name in (
-    "NEBIUS_API_KEY",
-    "NEBIUS_BASE_URL",
-    "NEBIUS_MODEL",
-    "TAVILY_API_KEY",
-    "TAVILY_BASE_URL",
-    "NEXUS_API_URL",
-):
-    try:
-        if not os.getenv(_secret_name) and _secret_name in st.secrets:
-            os.environ[_secret_name] = str(st.secrets[_secret_name])
-    except Exception:
-        # Local development without .streamlit/secrets.toml is expected.
-        pass
-
 from services.critic_service import CriticService  # noqa: E402
 from services.decision_service import DecisionService  # noqa: E402
 from services.decision_packet_service import DecisionPacketService  # noqa: E402
@@ -68,6 +51,23 @@ st.set_page_config(
     layout="wide",
     initial_sidebar_state="collapsed",
 )
+
+# Root-level Streamlit Community Cloud secrets are copied into the
+# environment so the existing service classes work locally and in Cloud.
+for _secret_name in (
+    "NEBIUS_API_KEY",
+    "NEBIUS_BASE_URL",
+    "NEBIUS_MODEL",
+    "TAVILY_API_KEY",
+    "TAVILY_BASE_URL",
+    "NEXUS_API_URL",
+):
+    try:
+        if not os.getenv(_secret_name) and _secret_name in st.secrets:
+            os.environ[_secret_name] = str(st.secrets[_secret_name])
+    except Exception:
+        # Local development without .streamlit/secrets.toml is expected.
+        pass
 
 st.markdown(
     f"<style>{(ROOT / 'ui' / 'styles' / 'nexus.css').read_text(encoding='utf-8')}</style>",

@@ -119,10 +119,14 @@ class TelemetryService:
 
         checks = [
             ReadinessCheck(
-                key="backend",
-                label="FastAPI backend",
+                key="runtime",
+                label="NEXUS runtime",
                 status="READY" if backend_health else "CHECK",
-                detail="Health endpoint reachable" if backend_health else "Backend health unavailable",
+                detail=(
+                    "Embedded runtime healthy"
+                    if (backend_health or {}).get("mode") == "embedded"
+                    else ("API health endpoint reachable" if backend_health else "Runtime health unavailable")
+                ),
             ),
             ReadinessCheck(
                 key="nemotron",

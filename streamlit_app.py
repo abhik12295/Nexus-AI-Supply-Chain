@@ -54,20 +54,21 @@ st.set_page_config(
 
 # Root-level Streamlit Community Cloud secrets are copied into the
 # environment so the existing service classes work locally and in Cloud.
-for _secret_name in (
-    "NEBIUS_API_KEY",
-    "NEBIUS_BASE_URL",
-    "NEBIUS_MODEL",
-    "TAVILY_API_KEY",
-    "TAVILY_BASE_URL",
-    "NEXUS_API_URL",
-):
-    try:
+# Keep parsing failures generic so secret values are never printed.
+_streamlit_secrets_error = False
+try:
+    for _secret_name in (
+        "NEBIUS_API_KEY",
+        "NEBIUS_BASE_URL",
+        "NEBIUS_MODEL",
+        "TAVILY_API_KEY",
+        "TAVILY_BASE_URL",
+        "NEXUS_API_URL",
+    ):
         if not os.getenv(_secret_name) and _secret_name in st.secrets:
             os.environ[_secret_name] = str(st.secrets[_secret_name])
-    except Exception:
-        # Local development without .streamlit/secrets.toml is expected.
-        pass
+except Exception:
+    _streamlit_secrets_error = True
 
 st.markdown(
     f"<style>{(ROOT / 'ui' / 'styles' / 'nexus.css').read_text(encoding='utf-8')}</style>",
@@ -118,6 +119,11 @@ def clear_decision_state() -> None:
 
 def main() -> None:
     render_header()
+    if _streamlit_secrets_error:
+        st.error(
+            "Streamlit Secrets could not be loaded. In Community Cloud, open Manage app → Settings → Secrets, "
+            "make sure every string value is quoted as valid TOML, save, and reboot the app."
+        )
     st.markdown(
         """
         <div class="page-intro">
@@ -233,7 +239,7 @@ def main() -> None:
         elif nemotron.configured:
             st.info("Run Nemotron analysis first; later stages unlock sequentially.")
         else:
-            st.warning("Add NEBIUS_API_KEY to .env before running the AI workflow.")
+            st.warning("Add NEBIUS_API_KEY to Streamlit Secrets (cloud) or .env (local) before running the AI workflow.")
 
     with analyze_col:
         run_ai = st.button(

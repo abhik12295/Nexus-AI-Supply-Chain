@@ -2,12 +2,30 @@ from __future__ import annotations
 
 from pathlib import Path
 import json
+import os
 
 import streamlit as st
 from dotenv import load_dotenv
 
 ROOT = Path(__file__).resolve().parent
 load_dotenv(ROOT / ".env")
+
+# Root-level Streamlit Community Cloud secrets are copied into the
+# environment so the existing service classes work locally and in Cloud.
+for _secret_name in (
+    "NEBIUS_API_KEY",
+    "NEBIUS_BASE_URL",
+    "NEBIUS_MODEL",
+    "TAVILY_API_KEY",
+    "TAVILY_BASE_URL",
+    "NEXUS_API_URL",
+):
+    try:
+        if not os.getenv(_secret_name) and _secret_name in st.secrets:
+            os.environ[_secret_name] = str(st.secrets[_secret_name])
+    except Exception:
+        # Local development without .streamlit/secrets.toml is expected.
+        pass
 
 from services.critic_service import CriticService  # noqa: E402
 from services.decision_service import DecisionService  # noqa: E402
@@ -115,7 +133,14 @@ def main() -> None:
         unsafe_allow_html=True,
     )
 
-    api_url = st.sidebar.text_input("NEXUS API URL", value="http://127.0.0.1:8000")
+    api_url = st.sidebar.text_input(
+        "NEXUS runtime",
+        value=os.getenv("NEXUS_API_URL", "embedded"),
+        help=(
+            "Use 'embedded' on Streamlit Community Cloud. "
+            "For local API testing, enter an http(s) FastAPI URL."
+        ),
+    )
     nemotron = NemotronService()
     planner = RecoveryPlanner(nemotron)
     simulator = RecoverySimulationService()
@@ -151,10 +176,14 @@ def main() -> None:
         st.rerun()
 
     try:
-        _, shipments, incidents, incident, analysis = load_nexus_data(api_url)
+        health, shipments, incidents, incident, analysis = load_nexus_data(api_url)
     except NexusAPIError as exc:
         st.error(str(exc))
-        st.code("source .venv/bin/activate\npython -m uvicorn app.main:app --reload", language="bash")
+        st.code(
+            'Set NEXUS_API_URL="embedded" for Streamlit Community Cloud, '
+            "or start the FastAPI service for local API-backed testing.",
+            language="text",
+        )
         st.stop()
 
     render_metrics(
